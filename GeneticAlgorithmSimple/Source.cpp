@@ -26,12 +26,11 @@ struct chromo_typ
 };
 
 //Prototypes
-void PrintGeneSymbot(int val);
+void PrintGeneSymbol(int val);
 std::string GetRandomBits(int length);
 int BinToDec(std::string bits);
 float AssignFitness(std::string bits, int target_value);
 void PrintChromo(std::string bits);
-void PrintGeneSymbol(int val);
 int ParseBits(std::string bits, int* buffer);
 std::string Roulette(int total_fitness, chromo_typ* Population);
 void Mutate(std::string &bits);
@@ -222,4 +221,58 @@ int ParseBits(std::string sBits, int* buffer)
 			buffer[i] = 10;
 	}
 	return cBuff;
+}
+
+//Given a string of bits and a target value this function will calculate its
+//representation and return a fitness score accordingly.
+
+float AssignFitness(std::string sBits, int target_value)
+{
+	//holds decimal values of gene sequence
+	int buffer[(int)(CHROMO_LENGTH / GENE_LENGTH)];
+
+	int num_elements = ParseBits(sBits, buffer);
+
+	float fResult = 0.0f;
+
+	for (int i = 0; i < num_elements - 1; i += 2)
+	{
+		switch (buffer[i])
+		{
+		case 10:
+			fResult += buffer[i+1];
+			break;
+		case 11:
+			fResult -= buffer[i + 1];
+			break;
+		case 12:
+			fResult *= buffer[i + 1];
+			break;
+		case 13:
+			fResult /= buffer[i + 1];
+			break;
+		}//end switch
+	}
+	//Now we calculate the fitness. First to check to see if a solution has been found
+	//and assign an aribarily high fitness score if this is so.
+
+	if (fResult == (float)target_value)
+		return 999.0f;
+	else
+		return 1 / (float)fabs((double)(target_value - fResult));
+}
+
+void PrintChromo(std::string sBits)
+{
+	//Holds decimal values of gene sequence
+	int buffer[(int)(CHROMO_LENGTH / GENE_LENGTH)];
+
+	//parse the bit string
+	int num_elements = ParseBits(sBits, buffer);
+
+	for (int i = 0; i < num_elements; i++)
+	{
+		PrintGeneSymbol(buffer[i]);
+	}
+	return;
 }
