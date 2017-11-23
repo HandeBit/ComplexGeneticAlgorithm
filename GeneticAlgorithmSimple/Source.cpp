@@ -28,12 +28,12 @@ struct chromo_typ
 //Prototypes
 void PrintGeneSymbol(int val);
 std::string GetRandomBits(int length);
-int BinToDec(std::string bits);
-float AssignFitness(std::string bits, int target_value);
+int BinToDec(std::string sBits);
+float AssignFitness(std::string sBits, int target_value);
 void PrintChromo(std::string bits);
 int ParseBits(std::string bits, int* buffer);
 std::string Roulette(int total_fitness, chromo_typ* Population);
-void Mutate(std::string &bits);
+void Mutate(std::string &sBits);
 void Crossover(std::string &offspring1, std::string &offsprin2);
 
 int main()
@@ -275,4 +275,84 @@ void PrintChromo(std::string sBits)
 		PrintGeneSymbol(buffer[i]);
 	}
 	return;
+}
+
+//given a integer this function outputs its symbol to the screen
+void PrintGeneSymbol(int val)
+{
+	if (val < 10)
+		std::cout << val << " ";
+	else
+	{
+		switch (val)
+		{
+		case 10:
+			std::cout << "+";
+			break;
+		case 11:
+			std::cout << "-";
+			break;
+		case 12:
+			std::cout << "*";
+			break;
+		case 13:
+			std::cout << "/";
+			break;
+		}//end switch
+		std::cout << " ";
+	}
+	return;
+}
+
+//Mutates a chromosome bit dependent on the mutation rate.
+void Mutate(std::string &sBits)
+{
+	for (int i = 0; i < sBits.length(); i++)
+	{
+		if (RANDOM_NUM < MUTATION_RATE)
+		{
+			if (sBits.at(i) == '1')
+				sBits.at(i) = '0';
+			else
+				sBits.at(i) = '1';
+		}
+	}
+	return;
+}
+
+//  Dependent on the CROSSOVER_RATE this function selects a random point along the 
+//  lenghth of the chromosomes and swaps all the  bits after that point.
+void Crossover(std::string &offspring1, std::string &offspring2)
+{
+	//dependent on the crossover rate
+	if (RANDOM_NUM < CROSSOVER_RATE)
+	{
+		//create a random crossover point
+		int crossover = (int)(RANDOM_NUM * CHROMO_LENGTH);
+		auto t1 = offspring1.substr(0, crossover) + offspring2.substr(crossover, CHROMO_LENGTH);
+		auto t2 = offspring2.substr(0, crossover) + offspring1.substr(crossover, CHROMO_LENGTH);
+
+		offspring1 = t1;
+		offspring2 = t2;
+	}
+}
+
+//  selects a chromosome from the population via roulette wheel selection
+std::string Roulette(int total_fitness, chromo_typ* Population)
+{
+	//generate a random number between 0 & total fitness count
+	float fSlice = (float)(RANDOM_NUM * total_fitness);
+
+	//go through the chromosomes adding up the fitness so far
+	float fFitnessSoFar = 0.0;
+
+	for (int i = 0; i < POP_SIZE; i++)
+	{
+		fFitnessSoFar += Population[i].fFitness;
+
+		//if the fitness so far > random number return the chromo
+		if (fFitnessSoFar >= fSlice)
+			return Population[i].sBits;
+	}
+	return "";
 }
