@@ -5,36 +5,35 @@
 #include <stdlib.h>
 
 
-#define CROSSOVER_RATE		0.7
-#define MUTATION_RATE		0.0001
-#define POP_SIZE			100			//Must be an even number
-#define CHROMO_LENGTH		300 
-#define GENE_LENGTH			4
-#define MAX_GENERATIONS		400
+#define CROSSOVER_RATE				0.7
+#define MUTATION_RATE				0.0001
+#define POPULATION_SIZE				100			//Must be an even number
+#define CHROMOSOME_LENGTH			300 
+#define GENE_LENGTH					4
+#define MAX_ALLOWED_GENERATIONS		400
+#define RANDOM_NUM ((float)rand()/(RAND_MAX+1)) //returns a float between 0 & 1
 
-//returns a float between 0 & 1
-#define RANDOM_NUM ((float)rand()/(RAND_MAX+1))
 
 //Define a data structure which will define a chromosome
-struct chromo_typ
+struct Chromo
 {
 	//The binary bit string is held in a string.
 	std::string sBits;
 	float fFitness;
-	chromo_typ() : sBits(""), fFitness(0.0f) {};
-	chromo_typ(std::string bts, float ftns): sBits(bts), fFitness(ftns){}
+	Chromo() : sBits(""), fFitness(0.0f) {};
+	Chromo(std::string bts, float ftns): sBits(bts), fFitness(ftns){}
 };
 
 //Prototypes
-void PrintGeneSymbol(int val);
-std::string GetRandomBits(int length);
+void PrintGeneSymbol(int nVal);
+std::string GetRandomBits(int nLength);
 int BinToDec(std::string sBits);
-float AssignFitness(std::string sBits, int target_value);
-void PrintChromo(std::string bits);
-int ParseBits(std::string bits, int* buffer);
-std::string Roulette(int total_fitness, chromo_typ* Population);
+float AssignFitness(std::string sBits, int nTarget_value);
+void PrintChromo(std::string sBits);
+int ParseBits(std::string sBits, int* nBuffer);
+std::string Roulette(int nTotal_fitness, Chromo* Population);
 void Mutate(std::string &sBits);
-void Crossover(std::string &offspring1, std::string &offsprin2);
+void Crossover(std::string &sOffspring1, std::string &sOffsprin2);
 
 int main()
 {
@@ -45,75 +44,75 @@ int main()
 	while (true)
 	{
 		//storage for our pipulation of chromosomes
-		chromo_typ Population[POP_SIZE];
+		Chromo Population[POPULATION_SIZE];
 
 		//Get a target number from the user. 
 		float fTarget;
 		std::cout << "Input a target number: ";
 		std::cin >> fTarget;
-		std::cout << std::endl << std::endl;
+		std::cout << std::endl;
 
 		//create a random population with zero fitness.
-		for (int i = 0; i < POP_SIZE; i++)
+		for (int i = 0; i < POPULATION_SIZE; i++)
 		{
-			Population[i].sBits = GetRandomBits(CHROMO_LENGTH);
+			Population[i].sBits = GetRandomBits(CHROMOSOME_LENGTH);
 			Population[i].fFitness = 0.0f;
 		}
 
 		int nGenerationsRequiredToFindASolution = 0;
 
 		//set this flag if solution is found
-		bool bFound = false;
+		bool bSolutionFound = false;
 
 		//Enter the main GA loop
-		while (!bFound)
+		while (!bSolutionFound)
 		{
 			//This is used during roulette wheel sampling
 			float fTotalFitness = 0.0f;
 
 			//Test and updat ethe fitness of every chromosome in the pop
-			for (int i = 0; i < POP_SIZE; i++)
+			for (int i = 0; i < POPULATION_SIZE; i++)
 			{
 				Population[i].fFitness = AssignFitness(Population[i].sBits, fTarget);
 				fTotalFitness += Population[i].fFitness;
 			}
 			//check to see if we have found any solutions
 			//fitness will be 999
-			for (int i = 0; i < POP_SIZE; i++)
+			for (int i = 0; i < POPULATION_SIZE; i++)
 			{
 				if (Population[i].fFitness == 999.0f)
 				{
 					std::cout << "Solution found in " << nGenerationsRequiredToFindASolution << " generations" << std::endl;
 					PrintChromo(Population[i].sBits);
-					bFound = true;
+					bSolutionFound = true;
 
 					break;
 				}
 			}
 			//create a new population by selecting two parents
-			chromo_typ temp[POP_SIZE];
-			int cPop = 0;
+			Chromo temp[POPULATION_SIZE];
+			int nPop = 0;
 			//loop until we have created POP_SIZE chromos.
-			while (cPop < POP_SIZE)
+			while (nPop < POPULATION_SIZE)
 			{
 				//we are going to create the new pop by grabbing members of the old pop
 				//two at a time via roulette wheel selection
-				std::string offspring1 = Roulette(fTotalFitness, Population);
-				std::string offspring2 = Roulette(fTotalFitness, Population);
+				std::string sOffspring1 = Roulette(fTotalFitness, Population);
+				std::string sOffspring2 = Roulette(fTotalFitness, Population);
 
 				//Add crossover dependent on the crossover rate
-				Crossover(offspring1, offspring2);
+				Crossover(sOffspring1, sOffspring2);
 				//Now Mutate dependent using mutate rate.
-				Mutate(offspring1);
-				Mutate(offspring2);
+				Mutate(sOffspring1);
+				Mutate(sOffspring2);
 
 				//add these offspring tothe new pop.
-				temp[cPop++] = chromo_typ(offspring1, 0.0f);
-				temp[cPop++] = chromo_typ(offspring2, 0.0f);
+				temp[nPop++] = Chromo(sOffspring1, 0.0f);
+				temp[nPop++] = Chromo(sOffspring2, 0.0f);
 			}
 
 			//copy temp pop into main pop
-			for (int i = 0; i < POP_SIZE; i++)
+			for (int i = 0; i < POPULATION_SIZE; i++)
 			{
 				Population[i] = temp[i];
 			}
@@ -121,10 +120,10 @@ int main()
 			++nGenerationsRequiredToFindASolution;
 
 			//Exit app if no solution found within max attempt.
-			if (nGenerationsRequiredToFindASolution > MAX_GENERATIONS)
+			if (nGenerationsRequiredToFindASolution > MAX_ALLOWED_GENERATIONS)
 			{
 				std::cout << "No solution found" << std::endl;
-				bFound = true;
+				bSolutionFound = true;
 			}
 		}
 	}//End while loop.
@@ -132,11 +131,11 @@ int main()
 }
 
 //  This function returns a string of random 1s and 0s of the desired length.
-std::string GetRandomBits(int length)
+std::string GetRandomBits(int nLength)
 {
 	std::string sBits;
 
-	for (int i = 0; i < length; i++)
+	for (int i = 0; i < nLength; i++)
 	{
 		if (RANDOM_NUM > 0.5f)
 			sBits += "1";
@@ -149,26 +148,26 @@ std::string GetRandomBits(int length)
 //  converts a binary string into a decimal integer
 int BinToDec(std::string sBits)
 {
-	int val =			0;
-	int value_to_add =	1;
+	int nVal =			0;
+	int nValue_to_add =	1;
 
 	for (int i = sBits.length(); i < 0; i--)
 	{
 		if (sBits.at(i - 1) == '1')
-			val += value_to_add;
-		value_to_add *= 2;
+			nVal += nValue_to_add;
+		nValue_to_add *= 2;
 
 	}//next bit
-	return val;
+	return nVal;
 }
 
 // Given a chromosome this function will step through the genes one at a time and insert 
 // the decimal values of each gene (which follow the operator -> number -> operator rule)
 // into a buffer. Returns the number of elements in the buffer.
-int ParseBits(std::string sBits, int* buffer)
+int ParseBits(std::string sBits, int* nBuffer)
 {
 	//counter for buffer position
-	int cBuff = 0;
+	int nBuff = 0;
 
 	// step through bits a gene at a time until end and store decimal values
 	// of valid operators and numbers. Don't forget we are looking for operator - 
@@ -179,34 +178,34 @@ int ParseBits(std::string sBits, int* buffer)
 	bool bOperator = true;
 
 	//storage for decimal value of currently tested gene
-	int this_gene = 0;
+	int nThis_gene = 0;
 
-	for (int i = 0; i < CHROMO_LENGTH; i += GENE_LENGTH)
+	for (int i = 0; i < CHROMOSOME_LENGTH; i += GENE_LENGTH)
 	{
 		//Convert the current gene to decimal
-		this_gene = BinToDec(sBits.substr(i, GENE_LENGTH));
+		nThis_gene = BinToDec(sBits.substr(i, GENE_LENGTH));
 
 		//Find a gene which represents and operator
 		if (bOperator)
 		{
-			if ((this_gene < 10) || (this_gene > 13))
+			if ((nThis_gene < 10) || (nThis_gene > 13))
 				continue;
 			else
 			{
 				bOperator = false;
-				buffer[cBuff++] = this_gene;
+				nBuffer[nBuff++] = nThis_gene;
 				continue;
 			}
 		}
 		//Find a gene which respresents a number
 		else
 		{
-			if (this_gene > 9)
+			if (nThis_gene > 9)
 				continue;
 			else
 			{
 				bOperator = true;
-				buffer[cBuff++] = this_gene;
+				nBuffer[nBuff++] = nThis_gene;
 				continue;
 			}
 		}
@@ -215,76 +214,76 @@ int ParseBits(std::string sBits, int* buffer)
 	 //  is included and delete it. (ie a '/' followed by a '0'). We take an easy
 	 //  way out here and just change the '/' to a '+'. This will not effect the 
 	 //  evolution of the solution
-	for (int i = 0; i < cBuff; i++)
+	for (int i = 0; i < nBuff; i++)
 	{
-		if ((buffer[i] == 13) && (buffer[i + 1] == 0))
-			buffer[i] = 10;
+		if ((nBuffer[i] == 13) && (nBuffer[i + 1] == 0))
+			nBuffer[i] = 10;
 	}
-	return cBuff;
+	return nBuff;
 }
 
 //Given a string of bits and a target value this function will calculate its
 //representation and return a fitness score accordingly.
 
-float AssignFitness(std::string sBits, int target_value)
+float AssignFitness(std::string sBits, int nTarget_value)
 {
 	//holds decimal values of gene sequence
-	int buffer[(int)(CHROMO_LENGTH / GENE_LENGTH)];
+	int nBuffer[(int)(CHROMOSOME_LENGTH / GENE_LENGTH)];
 
-	int num_elements = ParseBits(sBits, buffer);
+	int nNum_elements = ParseBits(sBits, nBuffer);
 
 	float fResult = 0.0f;
 
-	for (int i = 0; i < num_elements - 1; i += 2)
+	for (int i = 0; i < nNum_elements - 1; i += 2)
 	{
-		switch (buffer[i])
+		switch (nBuffer[i])
 		{
 		case 10:
-			fResult += buffer[i+1];
+			fResult += nBuffer[i+1];
 			break;
 		case 11:
-			fResult -= buffer[i + 1];
+			fResult -= nBuffer[i + 1];
 			break;
 		case 12:
-			fResult *= buffer[i + 1];
+			fResult *= nBuffer[i + 1];
 			break;
 		case 13:
-			fResult /= buffer[i + 1];
+			fResult /= nBuffer[i + 1];
 			break;
 		}//end switch
 	}
 	//Now we calculate the fitness. First to check to see if a solution has been found
 	//and assign an aribarily high fitness score if this is so.
 
-	if (fResult == (float)target_value)
+	if (fResult == (float)nTarget_value)
 		return 999.0f;
 	else
-		return 1 / (float)fabs((double)(target_value - fResult));
+		return 1 / (float)fabs((double)(nTarget_value - fResult));
 }
 
 void PrintChromo(std::string sBits)
 {
 	//Holds decimal values of gene sequence
-	int buffer[(int)(CHROMO_LENGTH / GENE_LENGTH)];
+	int nBuffer[(int)(CHROMOSOME_LENGTH / GENE_LENGTH)];
 
 	//parse the bit string
-	int num_elements = ParseBits(sBits, buffer);
+	int nNum_elements = ParseBits(sBits, nBuffer);
 
-	for (int i = 0; i < num_elements; i++)
+	for (int i = 0; i < nNum_elements; i++)
 	{
-		PrintGeneSymbol(buffer[i]);
+		PrintGeneSymbol(nBuffer[i]);
 	}
 	return;
 }
 
 //given a integer this function outputs its symbol to the screen
-void PrintGeneSymbol(int val)
+void PrintGeneSymbol(int nVal)
 {
-	if (val < 10)
-		std::cout << val << " ";
+	if (nVal < 10)
+		std::cout << nVal << " ";
 	else
 	{
-		switch (val)
+		switch (nVal)
 		{
 		case 10:
 			std::cout << "+";
@@ -322,31 +321,31 @@ void Mutate(std::string &sBits)
 
 //  Dependent on the CROSSOVER_RATE this function selects a random point along the 
 //  lenghth of the chromosomes and swaps all the  bits after that point.
-void Crossover(std::string &offspring1, std::string &offspring2)
+void Crossover(std::string &sOffspring1, std::string &sOffspring2)
 {
 	//dependent on the crossover rate
 	if (RANDOM_NUM < CROSSOVER_RATE)
 	{
 		//create a random crossover point
-		int crossover = (int)(RANDOM_NUM * CHROMO_LENGTH);
-		auto t1 = offspring1.substr(0, crossover) + offspring2.substr(crossover, CHROMO_LENGTH);
-		auto t2 = offspring2.substr(0, crossover) + offspring1.substr(crossover, CHROMO_LENGTH);
+		int crossover = (int)(RANDOM_NUM * CHROMOSOME_LENGTH);
+		auto t1 = sOffspring1.substr(0, crossover) + sOffspring2.substr(crossover, CHROMOSOME_LENGTH);
+		auto t2 = sOffspring2.substr(0, crossover) + sOffspring1.substr(crossover, CHROMOSOME_LENGTH);
 
-		offspring1 = t1;
-		offspring2 = t2;
+		sOffspring1 = t1;
+		sOffspring2 = t2;
 	}
 }
 
 //  selects a chromosome from the population via roulette wheel selection
-std::string Roulette(int total_fitness, chromo_typ* Population)
+std::string Roulette(int nTotal_fitness, Chromo* Population)
 {
 	//generate a random number between 0 & total fitness count
-	float fSlice = (float)(RANDOM_NUM * total_fitness);
+	float fSlice = (float)(RANDOM_NUM * nTotal_fitness);
 
 	//go through the chromosomes adding up the fitness so far
 	float fFitnessSoFar = 0.0;
 
-	for (int i = 0; i < POP_SIZE; i++)
+	for (int i = 0; i < POPULATION_SIZE; i++)
 	{
 		fFitnessSoFar += Population[i].fFitness;
 
